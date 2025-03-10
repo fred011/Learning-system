@@ -18,26 +18,19 @@ const ChapterIdPage = async ({
     return redirect("/");
   }
 
-  const {
-    chapter,
-    course,
-    muxData,
-    attachments,
-    nextChapter,
-    userProgress,
-    enrollment,
-  } = await getChapter({
-    userId,
-    chapterId: params.chapterId,
-    courseId: params.courseId,
-  });
+  const { chapter, course, muxData, attachments, nextChapter, userProgress } =
+    await getChapter({
+      userId,
+      chapterId: params.chapterId,
+      courseId: params.courseId,
+    });
 
   if (!course || !chapter) {
     return redirect("/");
   }
 
   // Ensure that chapters marked as free can be accessed
-  const isLocked = !chapter.isFree && !enrollment;
+  const isLocked = !chapter.isFree;
   const completeOnEnd = !userProgress?.isCompleted;
 
   return (
@@ -66,7 +59,7 @@ const ChapterIdPage = async ({
         <div>
           <div className="p-4  flex flex-col md:flex-row items-center justify-between">
             <h2 className="text-2xl font-semibold mb-2">{chapter.title}</h2>
-            {enrollment || chapter.isFree ? (
+            {chapter.isFree ? (
               <CourseProgressButton
                 chapterId={params.chapterId}
                 courseId={params.courseId}
