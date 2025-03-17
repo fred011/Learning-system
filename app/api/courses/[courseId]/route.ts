@@ -3,6 +3,9 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { isTeacher } from "@/lib/teacher";
 
+// Ensure that Mux credentials no longer need to be initialized
+// No need for Mux credentials anymore
+
 export async function PATCH(
   req: Request,
   { params }: { params: { courseId: string } }
@@ -24,7 +27,7 @@ export async function PATCH(
         userId,
       },
       data: {
-        ...values,
+        ...values, // You can still update course details including YouTube URL
       },
     });
 
@@ -51,11 +54,7 @@ export async function DELETE(
         userId: userId,
       },
       include: {
-        chapters: {
-          include: {
-            muxData: true,
-          },
-        },
+        chapters: true, // Include chapters, but no longer include muxData
       },
     });
 
@@ -63,13 +62,7 @@ export async function DELETE(
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    // Delete Mux assets associated with the chapters
-    for (const chapter of course.chapters) {
-      if (chapter.muxData?.assetId) {
-        await videoApi.assets.delete(chapter.muxData.assetId);
-      }
-    }
-
+    // We no longer need to delete Mux assets
     const deletedCourse = await db.course.delete({
       where: {
         id: params.courseId,
