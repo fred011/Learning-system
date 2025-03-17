@@ -73,12 +73,12 @@ export const VideoPlayer = ({
       {/* Embedded YouTube player */}
       <iframe
         className={cn(!isReady && "hidden", "w-full h-full")}
-        src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&controls=1`}
+        src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&controls=1&rel=0&modestbranding=1&showinfo=0`}
         title={title}
         allowFullScreen
         onLoad={() => setIsReady(true)}
         onEnded={onEnd}
-      ></iframe>
+      />
     </div>
   );
 };
