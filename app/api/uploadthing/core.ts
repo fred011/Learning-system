@@ -5,13 +5,12 @@ import { isTeacher } from "@/lib/teacher";
 const f = createUploadthing();
 
 const handleAuth = async () => {
-  console.log("🔹 handleAuth is being called!"); // ✅ Check if this appears
+  console.log("🔹 handleAuth is being called!");
 
   try {
     const { userId } = await auth();
     console.log("🔹 Clerk Auth Response:", { userId });
 
-    // The logic here was reversed. It should check if the user is *not* a teacher, and then throw Unauthorized.
     const isAuthorized = await isTeacher(userId);
 
     if (!userId || !isAuthorized) {
@@ -28,6 +27,7 @@ const handleAuth = async () => {
 
 console.log("🚀 UploadThing API route is running!");
 
+// Handle file upload and YouTube URL separately
 export const ourFileRouter = {
   courseImage: f({ image: { maxFileSize: "8MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
@@ -54,13 +54,24 @@ export const ourFileRouter = {
       return { fileUrl: file.ufsUrl };
     }),
 
-  chapterVideo: f({ video: { maxFileCount: 1, maxFileSize: "512GB" } })
-    .middleware(() => handleAuth())
-    .onUploadComplete(({ metadata, file }) => {
-      console.log("✅ Upload complete for userId:", metadata.userId);
-      console.log("📂 File URL:", file.ufsUrl);
-      return { fileUrl: file.ufsUrl };
-    }),
+  // Handle YouTube URLs separately
+  // chapterVideo: f({})
+  //   .middleware(() => handleAuth())
+  //   .onUploadComplete(({ metadata, file }) => {
+  //     // Check if youtubeUrl is passed in the metadata
+  //     const youtubeUrl = metadata?.youtubeUrl;
+
+  //     if (youtubeUrl) {
+  //       console.log("✅ YouTube URL received for userId:", metadata.userId);
+  //       console.log("📂 YouTube Video URL:", youtubeUrl); // metadata stores the YouTube URL
+  //       return { youtubeUrl }; // Return YouTube URL
+  //     }
+
+  //     // Handle file URL if no YouTube URL is provided
+  //     console.log("✅ File upload complete for userId:", metadata.userId);
+  //     console.log("📂 File URL:", file.ufsUrl);
+  //     return { fileUrl: file.ufsUrl }; // Return file URL if no YouTube URL
+  //   }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

@@ -18,7 +18,7 @@ const ChapterIdPage = async ({
     return redirect("/");
   }
 
-  const { chapter, course, muxData, attachments, nextChapter, userProgress } =
+  const { chapter, course, attachments, nextChapter, userProgress } =
     await getChapter({
       userId,
       chapterId: params.chapterId,
@@ -38,7 +38,6 @@ const ChapterIdPage = async ({
       {userProgress?.isCompleted && (
         <Banner variant="success" label="You already completed this chapter." />
       )}
-      {/* Always show the warning if the chapter is locked, except when free */}
       {isLocked && !chapter.isFree && (
         <Banner
           variant="warning"
@@ -52,7 +51,7 @@ const ChapterIdPage = async ({
             title={chapter.title}
             courseId={params.courseId}
             nextChapterId={nextChapter?.id}
-            playbackId={muxData?.playbackId ?? ""}
+            youtubeUrl={chapter.youtubeUrl ?? ""}
             completeOnEnd={completeOnEnd}
           />
         </div>

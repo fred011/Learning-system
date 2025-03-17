@@ -6,7 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChapterTitleForm } from "./_components/chapter-title-form";
 import { ChapterDescriptionForm } from "./_components/chapter-description-form";
-import { ChapterVideoForm } from "./_components/chapter-video-form";
+import { ChapterVideoForm } from "./_components/chapter-video-form"; // Ensure the import is correct
 import { Banner } from "@/components/banner";
 import { ChapterActions } from "./_components/chapter-actions";
 
@@ -27,7 +27,7 @@ const ChapterIdPage = async ({
       courseId: params.courseId,
     },
     include: {
-      muxData: true,
+      // No need to include muxData anymore
     },
   });
 
@@ -35,8 +35,11 @@ const ChapterIdPage = async ({
     return redirect("/");
   }
 
-  const requiredFields = [chapter.title, chapter.description, chapter.videoUrl];
-
+  const requiredFields = [
+    chapter.title,
+    chapter.description,
+    chapter.youtubeUrl,
+  ]; // Fix field name to youtubeUrl
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
 
@@ -94,17 +97,18 @@ const ChapterIdPage = async ({
               courseId={params.courseId}
               chapterId={params.chapterId}
             />
-            <div></div>
           </div>
           <div>
             <div className="flex items-center gap-x-2">
               <IconBadge icon={Video} />
-              <h2 className="text-xl">Add a video</h2>
+              <h2 className="text-xl">Add a YouTube video</h2>
             </div>
+            {/* Pass isYouTube as a prop here */}
             <ChapterVideoForm
               initialData={chapter}
               chapterId={params.chapterId}
               courseId={params.courseId}
+              isYouTube={true} // Pass isYouTube flag to handle YouTube URL
             />
           </div>
         </div>

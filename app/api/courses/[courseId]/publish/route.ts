@@ -13,17 +13,14 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Fetch the course with chapters
     const course = await db.course.findUnique({
       where: {
         id: params.courseId,
         userId: userId,
       },
       include: {
-        chapters: {
-          include: {
-            muxData: true,
-          },
-        },
+        chapters: true, // Only include chapters
       },
     });
 
@@ -31,10 +28,12 @@ export async function PATCH(
       return new NextResponse("Not Found", { status: 404 });
     }
 
+    // Check if any chapter has a valid YouTube URL and is published
     const hasPublishedChapter = course.chapters.some(
-      (chapter) => chapter.isPublished
+      (chapter) => chapter.isPublished && chapter.youtubeUrl
     );
 
+    // Ensure required fields are present and there is a published chapter with YouTube URL
     if (
       !course.title ||
       !course.description ||
@@ -42,9 +41,10 @@ export async function PATCH(
       !course.categoryId ||
       !hasPublishedChapter
     ) {
-      return new NextResponse("Missing required fields", { status: 401 });
+      return new NextResponse("Missing required fields", { status: 400 });
     }
 
+    // Update course status to published
     const publishedCourse = await db.course.update({
       where: {
         id: params.courseId,

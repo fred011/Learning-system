@@ -31,22 +31,16 @@ export async function PATCH(
       },
     });
 
-    const muxData = await db.muxData.findUnique({
-      where: {
-        chapterId: params.chapterId,
-      },
-    });
+    if (!chapter) {
+      return new NextResponse("Chapter not found", { status: 404 });
+    }
 
-    if (
-      !chapter ||
-      !muxData ||
-      !chapter.title ||
-      !chapter.description ||
-      !chapter.videoUrl
-    ) {
+    // Check if required fields are present
+    if (!chapter.title || !chapter.description || !chapter.youtubeUrl) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
+    // Update the chapter as published
     const publishedChapter = await db.chapter.update({
       where: {
         id: params.chapterId,

@@ -13,7 +13,7 @@ export const getChapter = async ({
   chapterId,
 }: GetChapterProps) => {
   try {
-    // Fetch course data (no price field, so we don't select price)
+    // Fetch course data
     const course = await db.course.findUnique({
       where: {
         isPublished: true,
@@ -37,38 +37,29 @@ export const getChapter = async ({
       throw new Error("Course or Chapter not found");
     }
 
-    let muxData = null;
     let attachments: Attachment[] = [];
     let nextChapter: Chapter | null = null;
 
-    // Since the chapters are free, we don't need to check for purchase
+    // Get attachments for the course
     attachments = await db.attachment.findMany({
       where: {
         courseId: courseId,
       },
     });
 
-    if (chapter.isFree) {
-      muxData = await db.muxData.findUnique({
-        where: {
-          chapterId: chapterId,
+    // Fetch next chapter in the course
+    nextChapter = await db.chapter.findFirst({
+      where: {
+        courseId: courseId,
+        isPublished: true,
+        position: {
+          gt: chapter?.position,
         },
-      });
-
-      // Fetch next chapter in the course
-      nextChapter = await db.chapter.findFirst({
-        where: {
-          courseId: courseId,
-          isPublished: true,
-          position: {
-            gt: chapter?.position,
-          },
-        },
-        orderBy: {
-          position: "asc",
-        },
-      });
-    }
+      },
+      orderBy: {
+        position: "asc",
+      },
+    });
 
     const userProgress = await db.userProgress.findUnique({
       where: {
@@ -80,9 +71,11 @@ export const getChapter = async ({
     });
 
     return {
-      chapter,
+      chapter: {
+        ...chapter,
+        youtubeUrl: chapter.youtubeUrl, // Use YouTube URL instead of Mux
+      },
       course,
-      muxData,
       attachments,
       nextChapter,
       userProgress,
@@ -92,10 +85,9 @@ export const getChapter = async ({
     return {
       chapter: null,
       course: null,
-      muxData: null,
       attachments: [],
       nextChapter: null,
-      userProgress: null, // Returning null if there's an error
+      userProgress: null,
     };
   }
 };

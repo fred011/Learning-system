@@ -1,21 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { db } from "@/lib/db";
-import Mux from "@mux/mux-node";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-
-// Initialize Mux with credentials
-const mux = new Mux({
-  tokenId: process.env.MUX_TOKEN_ID!,
-  tokenSecret: process.env.MUX_TOKEN_SECRET!,
-});
-
-// Ensure that Mux credentials exist
-if (!process.env.MUX_TOKEN_ID || !process.env.MUX_TOKEN_SECRET) {
-  throw new Error("Mux API credentials are missing");
-}
-
-const videoApi = mux.video;
 
 export async function DELETE(
   req: Request,
@@ -39,6 +24,7 @@ export async function DELETE(
     if (!ownCourse) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
     const chapter = await db.chapter.findUnique({
       where: {
         id: params.chapterId,
@@ -50,22 +36,12 @@ export async function DELETE(
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    if (chapter.videoUrl) {
-      const existingMuxData = await db.muxData.findFirst({
-        where: {
-          chapterId: params.chapterId,
-        },
+    // If chapter has a YouTube URL, update it to null
+    if (chapter.youtubeUrl) {
+      await db.chapter.update({
+        where: { id: params.chapterId },
+        data: { youtubeUrl: null },
       });
-
-      // Delete existing Mux asset if it exists
-      if (existingMuxData) {
-        await videoApi.assets.delete(existingMuxData.assetId);
-        await db.muxData.delete({
-          where: {
-            id: existingMuxData.id,
-          },
-        });
-      }
     }
 
     const deletedChapter = await db.chapter.delete({
@@ -74,6 +50,7 @@ export async function DELETE(
       },
     });
 
+    // Update course if there are no published chapters
     const publishedChapterInCourse = await db.chapter.findMany({
       where: {
         courseId: params.courseId,
@@ -87,7 +64,7 @@ export async function DELETE(
           id: params.courseId,
         },
         data: {
-          isPublished: false,
+          isPublished: false, // Unpublish course if no published chapters exist
         },
       });
     }
@@ -105,7 +82,7 @@ export async function PATCH(
 ) {
   try {
     const { userId } = await auth();
-    const { isPublished, ...values } = await req.json();
+    const { isPublished, youtubeUrl, ...values } = await req.json();
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -122,6 +99,7 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Update chapter details
     const chapter = await db.chapter.update({
       where: {
         id: params.chapterId,
@@ -132,42 +110,53 @@ export async function PATCH(
       },
     });
 
-    if (values.videoUrl) {
-      const existingMuxData = await db.muxData.findFirst({
+    // If YouTube URL is provided, update it
+    if (youtubeUrl) {
+      await db.chapter.update({
         where: {
-          chapterId: params.chapterId,
+          id: params.chapterId,
+        },
+        data: {
+          youtubeUrl, // Update YouTube URL
         },
       });
+    }
 
-      if (existingMuxData) {
-        // Delete the existing asset using the Video API
-        await videoApi.assets.delete(existingMuxData.assetId);
-        await db.muxData.delete({
-          where: {
-            id: existingMuxData.id,
-          },
-        });
-      }
-
-      // Create a new asset
-      const asset = await videoApi.assets.create({
-        input: values.videoUrl,
-        playback_policy: ["public"],
-        test: false,
-      });
-
-      await db.muxData.create({
+    // Update `isPublished` flag for chapter if provided in the request body
+    if (isPublished !== undefined) {
+      await db.chapter.update({
+        where: {
+          id: params.chapterId,
+        },
         data: {
-          chapterId: params.chapterId,
-          assetId: asset.id,
-          playbackId: asset.playback_ids?.[0]?.id,
+          isPublished,
+        },
+      });
+    }
+
+    // Check if the course has any published chapters
+    const publishedChapterInCourse = await db.chapter.findMany({
+      where: {
+        courseId: params.courseId,
+        isPublished: true,
+      },
+    });
+
+    // If no published chapters, set the course as unpublished
+    if (!publishedChapterInCourse.length) {
+      await db.course.update({
+        where: {
+          id: params.courseId,
+        },
+        data: {
+          isPublished: false,
         },
       });
     }
 
     return NextResponse.json(chapter);
   } catch (error) {
-    console.log("[Error in COURSE_CHAPTER_ID]", error);
+    console.log("[Error in PATCH Course Chapter]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

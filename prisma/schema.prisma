@@ -47,15 +47,14 @@ model Attachment {
 }
 
 model Chapter {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String?
-  videoUrl    String?
-  position    Int
-  isPublished Boolean @default(false)
-  isFree      Boolean @default(true) // All chapters are now free
-
-  muxData MuxData?
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String?
+  youtubeUrl    String? // Replaced MuxData with YouTube URL
+  position      Int
+  isPublished   Boolean @default(false)
+  isFree        Boolean @default(true) // All chapters are now free
+  nextChapterId String?
 
   courseId String @db.ObjectId
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -64,15 +63,6 @@ model Chapter {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model MuxData {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  assetId    String
-  playbackId String?
-
-  chapterId String  @unique @db.ObjectId
-  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 }
 
 model UserProgress {
