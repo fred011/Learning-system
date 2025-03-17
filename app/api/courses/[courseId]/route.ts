@@ -1,20 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import Mux from "@mux/mux-node";
 import { isTeacher } from "@/lib/teacher";
-
-const mux = new Mux({
-  tokenId: process.env.MUX_TOKEN_ID!,
-  tokenSecret: process.env.MUX_TOKEN_SECRET!,
-});
-
-// Ensure that Mux credentials exist
-if (!process.env.MUX_TOKEN_ID || !process.env.MUX_TOKEN_SECRET) {
-  throw new Error("Mux API credentials are missing");
-}
-
-const videoApi = mux.video;
 
 export async function PATCH(
   req: Request,
