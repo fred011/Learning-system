@@ -100,7 +100,7 @@ export const ChapterVideoForm = ({
                 <iframe
                   width="100%"
                   height="100%"
-                  src={`https://www.youtube.com/embed/${videoId}`}
+                  src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&controls=1&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3`}
                   title="YouTube video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
